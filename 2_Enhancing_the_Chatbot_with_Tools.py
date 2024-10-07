@@ -1,29 +1,41 @@
 from typing import Annotated
 from langchain_aws import ChatBedrockConverse
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_core.messages import BaseMessage
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode, tools_condition
 
+from dotenv import load_dotenv
+load_dotenv()
 
 class State(TypedDict):
-    # メッセージの型は "list" です。アノテーションの `add_messages` 関数は
-    # この状態キーをどのように更新するべきかを定義します
-    # （この場合、メッセージを上書きするのではなく、リストに追加します）
     messages: Annotated[list, add_messages]
 
 graph_builder = StateGraph(State)
 
+tool = TavilySearchResults(max_results=2)
+tools = [tool]
 llm = ChatBedrockConverse(model="anthropic.claude-3-5-sonnet-20240620-v1:0")
+llm_with_tools = llm.bind_tools(tools)
 
 def chatbot(state: State):
-    return {"messages": [llm.invoke(state["messages"])]}
+    return {"messages": [llm_with_tools.invoke(state["messages"])]}
 
 
-# 最初の引数はユニークなノード名です
-# 2番目の引数は、ノードが使用されるたびに呼び出される関数またはオブジェクトです
 graph_builder.add_node("chatbot", chatbot)
+
+tool_node = ToolNode(tools=[tool])
+graph_builder.add_node("tools", tool_node)
+
+graph_builder.add_conditional_edges(
+    "chatbot",
+    tools_condition,
+)
+
+graph_builder.add_edge("tools", "chatbot")
 graph_builder.set_entry_point("chatbot")
-graph_builder.set_finish_point("chatbot")
 graph = graph_builder.compile()
 
 
