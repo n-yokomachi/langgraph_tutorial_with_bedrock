@@ -82,12 +82,14 @@ graph_builder.add_node("human", human_node)
 
 
 def select_next_node(state: State):
+    # ask_humanフラグがtrueの時humanノードを選択
     if state["ask_human"]:
         return "human"
-    # 
+    # ask_humanフラグがfalseのときtoolsノードを選択
     return tools_condition(state)
+    
 
-
+# chatbotノード実行後の条件付きエッジにselect_next_nodeを追加
 graph_builder.add_conditional_edges(
     "chatbot",
     select_next_node,
@@ -132,6 +134,21 @@ def update_graph_state():
     tool_message = create_response(human_response, ai_message)
     graph.update_state(config, {"messages": [tool_message]})
     print(graph.get_state(config).values["messages"])
+    
+
+# チャットの履歴を表示する
+def replay_chat():
+    for state in graph.get_state_history(config):
+        print("Num Messages: ", len(state.values["messages"]), "Next: ", state.next)
+        print(state.config)
+        print("-" * 80)
+
+# 引数に渡したcheckpoint_idの箇所まで巻き戻す
+def to_replay(checkpoint_id: str):
+    replay_config = {'configurable': {'thread_id': '1', 'checkpoint_ns': '', 'checkpoint_id': checkpoint_id}}
+    for event in graph.stream(None, replay_config, stream_mode="values"):
+        if "messages" in event:
+            event["messages"][-1].pretty_print()
 
 
 while True:
@@ -144,10 +161,12 @@ while True:
             stream_graph_updates_by_none()
         elif user_input == "update":
             update_graph_state()
+        elif user_input == "replay":
+            replay_chat()
+        elif user_input.startswith("to_replay"):
+            to_replay(user_input.split()[1])
         else:
             stream_graph_updates(user_input)
-    except:
-        user_input = "What do you know about LangGraph?"
-        print("User: " + user_input)
-        stream_graph_updates(user_input)
+    except Exception as e:
+        print(e)
         break
