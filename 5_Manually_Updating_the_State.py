@@ -95,12 +95,10 @@ while True:
             break
         elif user_input == "":
             stream_graph_updates_by_none()
-            break
         elif user_input == "update":
             update_graph_state()
-            break
-
-        stream_graph_updates(user_input)
+        else:
+            stream_graph_updates(user_input)
     except:
         user_input = "What do you know about LangGraph?"
         print("User: " + user_input)
