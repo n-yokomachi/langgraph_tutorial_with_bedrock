@@ -5,7 +5,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 
 
-# StateクラスでNodeなどで利用するオブジェクトと、その更新を方法をreducer関数を定義
+# StateクラスでNodeなどで利用するオブジェクトと、その更新方法をreducer関数として定義
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
@@ -33,7 +33,7 @@ def stream_graph_updates(user_input: str):
             print("Assistant:", value["messages"][-1].content)
 
 
-# このWhile文はこのグラフをチャットボットとして利用するためのインタフェース
+# このWhile文はこのグラフをチャットボットとして利用するための入力制御
 while True:
     try:
         user_input = input("User: ")

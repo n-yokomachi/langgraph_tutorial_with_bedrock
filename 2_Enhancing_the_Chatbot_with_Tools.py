@@ -7,6 +7,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
+# Tavily Search APIのAPIキーは.envファイルに記述し読み込む
 from dotenv import load_dotenv
 load_dotenv()
 
