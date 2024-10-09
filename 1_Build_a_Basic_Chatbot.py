@@ -5,25 +5,25 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 
 
+# StateクラスでNodeなどで利用するオブジェクトと、その更新を方法をreducer関数を定義
 class State(TypedDict):
-    # メッセージの型は "list" です。アノテーションの `add_messages` 関数は
-    # この状態キーをどのように更新するべきかを定義します
-    # （この場合、メッセージを上書きするのではなく、リストに追加します）
     messages: Annotated[list, add_messages]
 
 graph_builder = StateGraph(State)
 
+# chatbotがinvokeするLLMはChatBedrockConverseでConverse APIを実行するように変更
 llm = ChatBedrockConverse(model="anthropic.claude-3-5-sonnet-20240620-v1:0")
 
 def chatbot(state: State):
     return {"messages": [llm.invoke(state["messages"])]}
 
 
-# 最初の引数はユニークなノード名です
-# 2番目の引数は、ノードが使用されるたびに呼び出される関数またはオブジェクトです
+# chatbot関数をgraph_builder.add_node()でNodeとして追加
 graph_builder.add_node("chatbot", chatbot)
+# graph_builder.set_entry_point(), graph_builder.set_finish_point()でグラフの始点、終点をEdgeとして定義
 graph_builder.set_entry_point("chatbot")
 graph_builder.set_finish_point("chatbot")
+
 graph = graph_builder.compile()
 
 
@@ -33,6 +33,7 @@ def stream_graph_updates(user_input: str):
             print("Assistant:", value["messages"][-1].content)
 
 
+# このWhile文はこのグラフをチャットボットとして利用するためのインタフェース
 while True:
     try:
         user_input = input("User: ")
@@ -42,7 +43,6 @@ while True:
 
         stream_graph_updates(user_input)
     except:
-        # fallback if input() is not available
         user_input = "What do you know about LangGraph?"
         print("User: " + user_input)
         stream_graph_updates(user_input)
