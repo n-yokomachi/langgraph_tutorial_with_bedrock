@@ -1,3 +1,4 @@
 # langgraph_tutorial_with_bedrock
 
-LangGraphの公式サイトのチュートリアルをAmazon Bedrockを使用にカスタマイズしたソースコードです
+LangGraph公式サイトのチュートリアルのQuick Startを、
+Amazon BedrockのClaudeを利用するにカスタマイズしたソースコードです
